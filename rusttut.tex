@@ -17,6 +17,7 @@
 
 \begin{document}
 
+
 \begin{frame}
     \titlepage
 \end{frame}
@@ -286,11 +287,10 @@ Some tools for unsafe Rust exist
 \end{itemize} 
 \end{frame} 
 
+
+
+
 \section{Rust Verifiers}
-
-https://docs.google.com/document/d/1toq2g81wjf27UohWYZBSptEX5R1NnIgshVAwFxO94kM/edit?tab=t.0
-
-https://chatgpt.com/c/685973b6-8c08-8007-b81a-515cafb07605
 
 \begin{frame}{Rust Verification Tools}
 \begin{itemize} 
@@ -304,8 +304,92 @@ https://chatgpt.com/c/685973b6-8c08-8007-b81a-515cafb07605
 \end{itemize} 
 \end{frame}
 
-\begin{frame}{Prusti} 
+\begin{frame}{Prusti / Viper} 
+\begin{center}
+\includegraphics[scale=0.3]{pictures/viper.png}
+\end{center}
+\end{frame}
+
+
+\begin{frame}{Prusti / Viper} 
+\begin{itemize}
+\item Prusti built on top of Viper
+\item Automatically check for panics and e.g. integer overflow
+\item Contract-based specifications
+\item Viper and Prusti uses a separation logic: currently Prusti re-encodes Rust memory model in separation logic during translation to Viper (might potentially use Place Capability Graphs in future)
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Flux} 
+\begin{itemize}
+\item Refinement Type Checking (liquid types) - statements to be proven are encoded as types
+\item Runs as a Rust compiler plugin 
+\item Less powerful than Prusti but much faster and with fewer annotations
+\item Concept of "strong mutability / structural mutability" - e.g. whether a vector's length can change or just the values of its elements
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Creusot} 
+\begin{itemize}
+\item ``
+Creusot is a deductive verifier for Rust code. It verifies your code is safe from panics, overflows, and assertion failures. By adding annotations you can take it further and verify your code does the correct thing.
+"
+\item Translate Rust to Coma / Why3
+\item CreuSAT a SAT-solver built in Rust and verified with Creusot
+\end{itemize}
+\end{frame}
+
+\begin{frame}{RustHorn} 
+\begin{block}{RustHorn}
+\begin{itemize}
+\item Reduces Rust to Constrained Horn Clauses
+\item ``Semantic typing"
+\end{itemize}
+\end{block}
+\begin{block}{RustHornBelt}
+\begin{itemize}
+\item Mechanized translation into Req / Coq
+\item ``
+first machine-checked proof of soundness for RustHorn-style verification
+"
+\item Reduces Rust to Constrained Horn Clauses and then solves with CHC solvers
+\item extends RustBelt’s model to reason not only about safety but also functional correctness
+\item soundness proofs for APIs implemented with unsafe
+\end{itemize}
+\end{block}
 
 \end{frame}
+
+\begin{frame} {Aeneas}
+
+\begin{itemize}
+\item 
+ verification toolchain
+\item
+Translates Rust’s MIR to $\lambda$-calculus
+\item Uses Charon which compiles Rust programs (MIR) to an intermediate representation called LLBC
+\item
+backends for F\*, Coq, HOL4 and LEAN.
+\end{itemize}
+\end{frame} 
+
+
+
+\begin{frame} {Gilian-Rust}
+
+\begin{itemize}
+\item 
+Attempt to simultanously handle safe and unsafe (hybrid) Rust
+\item 
+no real tooling available
+\end{itemize}
+\end{frame} 
+
+
+
+
+
+
+
 
 \end{document}
