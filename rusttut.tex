@@ -274,8 +274,14 @@ but in Rust, msg is not mutable
 \end{frame}
 
 \begin{frame}{Unsafe Rust} 
+\begin{itemize}
+\item 
 Unsafe Rust is essential for functioning of Rust 
-
+\item 
+It is more difficult to verify since we do not have the safety guarantees \emph{inside} unsafe blocks
+\item 
+But we can still isolate (un)safety, make assumptions, prove separately
+\end{itemize} 
 \end{frame} 
 
 \section{Rust Verifiers}
