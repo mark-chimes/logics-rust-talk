@@ -1,7 +1,11 @@
 \documentclass{beamer}
 \usepackage{listings, listings-rust}
+\usepackage{graphicx}
 
-\usepackage{beamerthemetuw}
+\lstset{escapeinside={<@}{@>}}
+
+
+\usepackage{beamerthemeTUW}
 %\usepackage{enumitem}
 \setbeamercovered{transparent}
 
@@ -52,21 +56,100 @@ Memory safety guarantees without garbage collection
 \end{block}
 \end{frame}
 
-\begin{frame}{Rust}
 
+\begin{frame}[fragile]
+\frametitle{Ownership and Borrow Examples}
+\begin{lstlisting}[language=Rust]
+foo(s); // foo takes ownership of s
+bar(&t); // bar borrows t as read-only
+baz(&mut u); // baz borrows u and can modify it
+\end{lstlisting}
+\end{frame}
+
+
+\begin{frame}{Rust: Variable Scopes}
+\begin{block}{} 
+\begin{itemize}
+\item Rust automatically calculates lifetimes
+\item When an object goes out of scope, Rust calls its destructor and frees its resources
+\item ``Resource Acquisition is Initialization" 
+\end{itemize}
+\end{block}
+\begin{quote}
+``resource is guaranteed to be held between when initialization finishes and finalization starts 
+and to be held only when the object is alive"
+\end{quote}
 \end{frame}
 
 
 \begin{frame}[fragile]
-\frametitle{Example Code}
+\frametitle{Drop example}
+
+
+\begin{block}{}
 \begin{lstlisting}[language=Rust]
-// This function borrows an i32
-fn borrow_i32(borrowed_i32: &i32) {
-    println!("This int is: {}", borrowed_i32);
+fn create_box() {
+    let my_box = Box::new(1i32);
+    borrow_box(&my_box);
+
+    // my_box memory freed here
 }
+\end{lstlisting}
+
+\end{block}
+\begin{lstlisting}[language=Rust]
+fn borrow_box(ibox: &Box<i32>)
 \end{lstlisting}
 \end{frame}
 
+
+\begin{frame}{Borrowing}
+\begin{block}{Rust Ownership and Borrowing}
+\begin{itemize} 
+	\item One owner
+	\item One read/write borrow
+	\item Multiple read-only borrows
+	\item When lifetime ends, item is returned
+\end{itemize} 
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Multiple Borrows Example}
+\begin{block}{}
+\begin{lstlisting}[language=Rust]
+    let mut s = String::from("hello");
+    
+    let t1: &mut String = &mut s;
+    // <@\textcolor{blue}{t1 never used again, gets dropped}@>
+    let t2: &mut String = &mut s;
+
+    let len = calculate_length(t2);
+ \end{lstlisting}
+\end{block}
+\begin{lstlisting}[language=Rust]
+fn calculate_length(s : &String) -> usize
+\end{lstlisting}
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Not Fine}
+\begin{block}{}
+\begin{lstlisting}[language=Rust]
+    let mut s = String::from("hello");
+    
+    let t1: &mut String = &mut s;
+    // <@\textcolor{red}{t1 used again later, still active}@>
+    let t2: &mut String = &mut s;
+
+    let len = calculate_length(<@\textcolor{red}{t1}@>); // fails
+ \end{lstlisting}
+\end{block}
+\begin{lstlisting}[language=Rust]
+fn calculate_length(s : &String) -> usize
+\end{lstlisting}
+\end{frame}
 
 
 \section{Formal Verification Intro}
@@ -75,10 +158,27 @@ fn borrow_i32(borrowed_i32: &i32) {
 \begin{itemize} 
 	\item Logically ``prove" correctness of a program
 	\item Usually labour-intensive process
-	\item 
+	\item Can involve manual encoding in e.g. Roq (Coq), Agda, Lean, Idris
+	\item Some tools for automation: Dafny, Viper, etc.
+	\item Often 
 \end{itemize} 
 \end{block}
 \end{frame}
+
+
+
+
+\begin{frame}
+\includegraphics[scale=0.6]{pictures/verification/bubblesort.png}
+\end{frame}
+
+\begin{frame}
+\begin{center}
+\includegraphics[scale=0.3]{pictures/verification/bubblesort_annotated.png}
+\end{center}
+\end{frame}
+
+
 
 
 \section{Combination}
