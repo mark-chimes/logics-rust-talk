@@ -1,0 +1,7 @@
+\frametitle{Example Code}
+\begin{lstlisting}[language=Rust]
+// This function borrows an i32
+fn borrow_i32(borrowed_i32: &i32) {
+    println!("This int is: {}", borrowed_i32);
+}
+\end{lstlisting}
