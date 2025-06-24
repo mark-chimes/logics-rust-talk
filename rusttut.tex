@@ -21,10 +21,10 @@
 \begin{frame}
     \titlepage
 \end{frame}
-
-\begin{frame}{Outline}
-\tableofcontents
-\end{frame}
+%
+%\begin{frame}{Outline}
+%\tableofcontents
+%\end{frame}
 
 \section{Rust}
 \begin{frame}{Overview}
@@ -72,7 +72,7 @@ baz(&mut u); // baz borrows u and can modify it
 \begin{block}{} 
 \begin{itemize}
 \item Rust automatically calculates lifetimes
-\item When an object goes out of scope, Rust calls its destructor and frees its resources
+\item When an object goes out of scope, its resources are automatically freed
 \item ``Resource Acquisition is Initialization" 
 \end{itemize}
 \end{block}
@@ -86,6 +86,9 @@ and to be held only when the object is alive"
 \begin{frame}[fragile]
 \frametitle{Drop example}
 
+\begin{lstlisting}[language=Rust]
+fn borrow_box(ibox: &Box<i32>)
+\end{lstlisting}
 
 \begin{block}{}
 \begin{lstlisting}[language=Rust]
@@ -98,9 +101,7 @@ fn create_box() {
 \end{lstlisting}
 
 \end{block}
-\begin{lstlisting}[language=Rust]
-fn borrow_box(ibox: &Box<i32>)
-\end{lstlisting}
+
 \end{frame}
 
 
@@ -117,6 +118,10 @@ fn borrow_box(ibox: &Box<i32>)
 
 \begin{frame}[fragile]
 \frametitle{Multiple Borrows Example}
+\begin{lstlisting}[language=Rust]
+fn calculate_length(s : &String) -> usize
+\end{lstlisting}
+
 \begin{block}{}
 \begin{lstlisting}[language=Rust]
     let mut s = String::from("hello");
@@ -128,14 +133,16 @@ fn borrow_box(ibox: &Box<i32>)
     let len = calculate_length(t2);
  \end{lstlisting}
 \end{block}
-\begin{lstlisting}[language=Rust]
-fn calculate_length(s : &String) -> usize
-\end{lstlisting}
+
 \end{frame}
 
 
 \begin{frame}[fragile]
 \frametitle{Not Fine}
+\begin{lstlisting}[language=Rust]
+fn calculate_length(s : &String) -> usize
+\end{lstlisting}
+
 \begin{block}{}
 \begin{lstlisting}[language=Rust]
     let mut s = String::from("hello");
@@ -147,9 +154,7 @@ fn calculate_length(s : &String) -> usize
     let len = calculate_length(<@\textcolor{red}{t1}@>); // fails
  \end{lstlisting}
 \end{block}
-\begin{lstlisting}[language=Rust]
-fn calculate_length(s : &String) -> usize
-\end{lstlisting}
+
 \end{frame}
 
 
@@ -158,7 +163,12 @@ fn calculate_length(s : &String) -> usize
 \begin{frame}{Unsafe Rust}
 \begin{block}{Unsafe Rust}
 \begin{itemize} 
-	\item it also exists
+	\item sections of code can be tagged `unsafe' - indicates borrow checker does not apply
+	\item necessary part of Rust - e.g. de/allocation optimizations, cyclic references, call external code
+	\item unsafe code should be wrapped in a safe API
+	\item lots of the Rust standard library uses `unsafe'
+	\item you can usually find a standard safely wrapped version of whatever unsafe thing you want to do
+	\item provides a challenge for formal verification
 \end{itemize} 
 \end{block}
 \end{frame}
@@ -170,7 +180,7 @@ fn calculate_length(s : &String) -> usize
 \begin{itemize} 
 	\item Program verification: Logically ``prove" correctness of a program
 	\item labour-intensive process
-	\item Can involve manual encoding in e.g. Roq (Coq), Agda, Lean, Idris
+	\item Can involve manual encoding in e.g. Coq (Rocq), Agda, Lean, Idris
 	\item Some tools for (partial) automation: Dafny, Viper, etc.
 	\item Often rely on an SMT solver and/or Horn Clause solver
 	\item ``very high level of reliability" BUT only as good as your mathematical model 
@@ -227,7 +237,7 @@ void increment_both(int *x, int *y)
  \end{lstlisting}
 \end{block}
 
-\begin{block}{Calling ``increment both" with same variable twice}
+\begin{block}{Calling ``increment both" with the same variable twice}
 \begin{lstlisting}[language=C]
 int a = 0;
 increment_both(&a, &a); 
@@ -251,6 +261,7 @@ Strategies exist, involving e.g. separation logic
 
 
 \begin{frame}[fragile]
+\vspace{3em}
 \begin{block}{C program}
 \begin{lstlisting}[language=C]
 const char *msg = "hello, world!"; 
@@ -274,7 +285,7 @@ msg
 but in Rust, msg is not mutable
 \end{frame}
 
-\begin{frame}{Unsafe Rust} 
+\begin{frame}{Unsafe Rust and Verification} 
 \begin{itemize}
 \item 
 Unsafe Rust is essential for functioning of Rust 
@@ -297,8 +308,7 @@ Some tools for unsafe Rust exist
 \item Prusti (Viper)
 \item Flux
 \item Creusot
-\item RustHorn
-\item RustHornBelt
+\item RustHorn and RustHornBelt
 \item Aeneas
 \item Gilian-Rust
 \end{itemize} 
@@ -326,6 +336,7 @@ Some tools for unsafe Rust exist
 \item Runs as a Rust compiler plugin 
 \item Less powerful than Prusti but much faster and with fewer annotations
 \item Concept of "strong mutability / structural mutability" - e.g. whether a vector's length can change or just the values of its elements
+\item No quantified statements - cannot verify e.g. sortedness of list
 \end{itemize}
 \end{frame}
 
@@ -348,7 +359,7 @@ Creusot is a deductive verifier for Rust code. It verifies your code is safe fro
 \end{block}
 \begin{block}{RustHornBelt}
 \begin{itemize}
-\item Mechanized translation into Req / Coq
+\item Mechanized translation into Rocq / Coq
 \item ``
 first machine-checked proof of soundness for RustHorn-style verification
 "
@@ -369,7 +380,7 @@ first machine-checked proof of soundness for RustHorn-style verification
 Translates Rust’s MIR to $\lambda$-calculus
 \item Uses Charon which compiles Rust programs (MIR) to an intermediate representation called LLBC
 \item
-backends for F\*, Coq, HOL4 and LEAN.
+backends for F\*, Rocq / Coq, HOL4 and LEAN.
 \end{itemize}
 \end{frame} 
 
@@ -379,13 +390,42 @@ backends for F\*, Coq, HOL4 and LEAN.
 
 \begin{itemize}
 \item 
-Attempt to simultanously handle safe and unsafe (hybrid) Rust
+Attempt to handle unsafe Rust
 \item 
-no real tooling available
+no real tooling available for the public
 \end{itemize}
+
+
+\begin{center}
+\includegraphics[scale=0.2]{pictures/gilian-creusot}
+\end{center}
+
 \end{frame} 
 
 
+
+
+
+\begin{frame} {Future Work}
+
+\begin{itemize}
+\item Verification of data-structures of specific shapes - e.g. Doubly-Linked Lists, Red-Black Trees
+\item Verification a la refinement types
+\item Possibly expand Flux to allow some correctness proofs
+\item Look into alternatives for modelling Rust memory for use with tools
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}{EU Flag} 
+\begin{center}
+\includegraphics[scale=0.1]{pictures/euflag.png}
+
+The project leading to this application has received funding from the
+European Union's Horizon 2020 research and innovation programme under grant agreement No
+101034440.
+\end{center}
+\end{frame}
 
 
 
