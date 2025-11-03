@@ -10,8 +10,8 @@
 \setbeamercovered{transparent}
 
 
-\title{Formally Verifying Rust}
-\subtitle{Making sure your Rust code works}
+\title{Refinement Types and Rust Verification}
+\subtitle{}
 \author{Mark Chimes}
 \date{\today}
 
@@ -30,12 +30,39 @@
 \begin{frame}{Overview}
 \begin{block}{What will we do?}
 \begin{itemize} 
-	\item Introduce Rust
-	\item Intrduce Formal verification
-	\item Motivate why formally verify with Rust
-	\item Examples of Rust Verification
+	\item Rapid Refresh on Formal verification
+	\item Refinement Type checking
+	\item Quick intro to Rust
+	\item How Refinement Types interact with Rust
 \end{itemize}
 \end{block}
+\end{frame}
+
+
+\section{Formal Verification Intro}
+\begin{frame}{Formal Verification: Rapid Refresh}
+\begin{block}{What is Formal Verification?}
+\begin{itemize} 
+	\item Program verification: Logically ``prove" correctness of a program
+	\item labour-intensive process
+	\item Can involve manual encoding in e.g. Coq (Rocq), Agda, Lean, Idris
+	\item Some tools for (partial) automation: Dafny, Viper, etc.
+	\item Often rely on an SMT solver and/or Horn Clause solver
+	\item ``very high level of reliability" BUT only as good as your mathematical model 
+	\item Other methods (e.g. model checking) also exist.
+\end{itemize} 
+\end{block}
+\end{frame}
+
+
+\begin{frame}
+\includegraphics[scale=0.6]{pictures/verification/bubblesort.png}
+\end{frame}
+
+\begin{frame}
+\begin{center}
+\includegraphics[scale=0.3]{pictures/verification/bubblesort_annotated.png}
+\end{center}
 \end{frame}
 
 
@@ -174,31 +201,6 @@ fn calculate_length(s : &String) -> usize
 \end{frame}
 
 
-\section{Formal Verification Intro}
-\begin{frame}{Formal Verification}
-\begin{block}{What is Formal Verification?}
-\begin{itemize} 
-	\item Program verification: Logically ``prove" correctness of a program
-	\item labour-intensive process
-	\item Can involve manual encoding in e.g. Coq (Rocq), Agda, Lean, Idris
-	\item Some tools for (partial) automation: Dafny, Viper, etc.
-	\item Often rely on an SMT solver and/or Horn Clause solver
-	\item ``very high level of reliability" BUT only as good as your mathematical model 
-	\item Other methods (e.g. model checking) also exist.
-\end{itemize} 
-\end{block}
-\end{frame}
-
-
-\begin{frame}
-\includegraphics[scale=0.6]{pictures/verification/bubblesort.png}
-\end{frame}
-
-\begin{frame}
-\begin{center}
-\includegraphics[scale=0.3]{pictures/verification/bubblesort_annotated.png}
-\end{center}
-\end{frame}
 
 \section{Combination}
 \begin{frame}{}
@@ -299,37 +301,6 @@ Some tools for unsafe Rust exist
 \end{frame} 
 
 
-
-
-\section{Rust Verifiers}
-
-\begin{frame}{Rust Verification Tools}
-\begin{itemize} 
-\item Prusti (Viper)
-\item Flux
-\item Creusot
-\item RustHorn and RustHornBelt
-\item Aeneas
-\item Gilian-Rust
-\end{itemize} 
-\end{frame}
-
-\begin{frame}{Prusti / Viper} 
-\begin{center}
-\includegraphics[scale=0.3]{pictures/viper.png}
-\end{center}
-\end{frame}
-
-
-\begin{frame}{Prusti / Viper} 
-\begin{itemize}
-\item Prusti built on top of Viper
-\item Automatically check for panics and e.g. integer overflow
-\item Contract-based specifications
-\item Viper and Prusti uses a separation logic: currently Prusti re-encodes Rust memory model in separation logic during translation to Viper (might potentially use Place Capability Graphs in future)
-\end{itemize}
-\end{frame}
-
 \begin{frame}{Flux} 
 \begin{itemize}
 \item Refinement Type Checking (liquid types) - statements to be proven are encoded as types
@@ -338,83 +309,6 @@ Some tools for unsafe Rust exist
 \item Concept of "strong mutability / structural mutability" - e.g. whether a vector's length can change or just the values of its elements
 \item No quantified statements - cannot verify e.g. sortedness of list
 \end{itemize}
-\end{frame}
-
-\begin{frame}{Creusot} 
-\begin{itemize}
-\item ``
-Creusot is a deductive verifier for Rust code. It verifies your code is safe from panics, overflows, and assertion failures. By adding annotations you can take it further and verify your code does the correct thing.
-"
-\item Translate Rust to Coma / Why3
-\item CreuSAT a SAT-solver built in Rust and verified with Creusot
-\end{itemize}
-\end{frame}
-
-\begin{frame}{RustHorn} 
-\begin{block}{RustHorn}
-\begin{itemize}
-\item Reduces Rust to Constrained Horn Clauses
-\item ``Semantic typing"
-\end{itemize}
-\end{block}
-\begin{block}{RustHornBelt}
-\begin{itemize}
-\item Mechanized translation into Rocq / Coq
-\item ``
-first machine-checked proof of soundness for RustHorn-style verification
-"
-\item Reduces Rust to Constrained Horn Clauses and then solves with CHC solvers
-\item extends RustBelt’s model to reason not only about safety but also functional correctness
-\item soundness proofs for APIs implemented with unsafe
-\end{itemize}
-\end{block}
-
-\end{frame}
-
-\begin{frame} {Aeneas}
-
-\begin{itemize}
-\item 
- verification toolchain
-\item
-Translates Rust’s MIR to $\lambda$-calculus
-\item Uses Charon which compiles Rust programs (MIR) to an intermediate representation called LLBC
-\item
-backends for F\*, Rocq / Coq, HOL4 and LEAN.
-\end{itemize}
-\end{frame} 
-
-
-
-\begin{frame} {Gilian-Rust}
-
-\begin{itemize}
-\item 
-Attempt to handle unsafe Rust
-\item 
-no real tooling available for the public
-\end{itemize}
-
-
-\begin{center}
-\includegraphics[scale=0.2]{pictures/gilian-creusot}
-\end{center}
-
-\end{frame} 
-
-
-
-
-
-\begin{frame} {Future Work}
-
-\begin{itemize}
-\item Verification of data-structures of specific shapes - e.g. Doubly-Linked Lists, Red-Black Trees
-\item Verification a la refinement types
-\item Possibly expand Flux to allow some correctness proofs
-\item Look into alternatives for modelling Rust memory for use with tools
-\end{itemize}
-
 \end{frame}
 
 \begin{frame}{EU Flag} 
