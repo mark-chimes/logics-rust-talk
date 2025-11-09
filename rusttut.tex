@@ -26,6 +26,232 @@
 %\tableofcontents
 %\end{frame}
 
+\section{Formal Verification Intro}
+
+
+\begin{frame}[fragile]
+\begin{block}{Possibly Correct Python Code}
+\begin{lstlisting}[language=Python]
+total = 0
+for x in items:
+    total = total + x 
+\end{lstlisting}
+\end{block}
+\end{frame}
+
+\begin{frame}[fragile]
+\begin{block}{Possibly Correct Python Code}
+\begin{lstlisting}[language=Python]
+total = 0
+for x in <@\textcolor{blue}{items}@>:
+    total = total + x 
+\end{lstlisting}
+\end{block}
+
+What happens if the list of \emph{items} contains a non-integer?
+
+In Python, this is only caught at run-time. In C or Rust this is caught at compile-time. The \textbf{Type System} saves us some headaches!
+\end{frame}
+
+
+
+\begin{frame}[fragile]{Two pointers}
+\begin{block}{Possibly Correct C Code}
+\begin{lstlisting}[language=C]
+void increment_both(int *x, int *y)
+{
+    *x = *x + 1; 
+    *y = *y + 1;   
+}
+ \end{lstlisting}
+\end{block}
+
+Naively expect, after ``increment both" is done, that\\
+x\_end = x\_start + 1 and \\
+y\_end = y\_start + 1
+
+\end{frame}
+
+\begin{frame}[fragile]{}
+\begin{block}{Possibly Correct C Code}
+\begin{lstlisting}[language=C]
+void increment_both(int *x, int *y)
+{
+    *x = *x + 1; 
+    *y = *y + 1;   
+}
+ \end{lstlisting}
+\end{block}
+
+\begin{block}{}
+\begin{lstlisting}[language=C]
+increment_both(&a, &a); 
+\end{lstlisting}
+\end{block}
+Now x\_end = x\_start + 2 ``and" y\_end = y\_start + 2.
+\end{frame}
+
+
+
+\begin{frame}{}
+\begin{itemize}
+\item In Safe Rust, mutable references can \emph{never alias}. I.e.,$*x$ and $*y$ must point to 
+\emph{distinct areas of memory}.
+\end{itemize} 
+\end{frame}
+
+\begin{frame} 
+We are interested in writing \emph{more correct} code. Thus, we would want to avoid the following kinds of \emph{common mistakes}: 
+
+\begin{block}{}
+\begin{itemize}
+\item divide by zero
+\item index an array outside its bounds (or try to use an element from an empty list/array)
+\item run binary search on an unsorted list
+\item use a data-structure before it is initialized
+\item multiply matrices with incompatible dimensions
+\item use a pointer after it is deallocated in memory
+\item forget a base-case in a recursive function
+\item general off-by one error
+\end{itemize}
+\end{block}
+
+\end{frame}
+
+
+\section{Formal Verification Intro}
+\begin{frame}{Formal Verification: Rapid Refresh}
+\begin{block}{What is Formal Verification?}
+\begin{itemize} 
+	\item Program verification: Logically ``prove" correctness of a program
+	\item labour-intensive process - Can involve manual encoding in e.g. Rocq, Agda, Lean, Idris
+	\item Some tools for (partial) automation: Dafny, Viper, etc.
+	\item Often rely on an SMT solver and/or Horn Clause solver
+	\item ``very high level of reliability" BUT only as good as your mathematical model 
+\end{itemize} 
+\end{block}
+\end{frame}
+
+\begin{frame}{Formal Verification: Rapid Refresh}
+\begin{block}{What is Formal Verification?}
+\begin{itemize} 
+	\item Program verification: Logically ``prove" correctness of a program
+	\item labour-intensive process - Can involve manual encoding in e.g. Rocq, Agda, Lean, Idris
+	\item Some tools for (partial) automation: Dafny, Viper, etc.
+	\item Often rely on an SMT solver and/or Horn Clause solver
+	\item ``very high level of reliability" BUT only as good as your mathematical model 
+\end{itemize} 
+\end{block}
+\end{frame}
+
+
+
+\section{Refinement Type Checking}
+\begin{frame}{Refinement Types: Idea}
+\begin{itemize}
+\item
+Type systems are useful for writing correct code, e.g. use \emph{int} for numbers, but for true/false use a \emph{bool} instead of 0 and 1.
+
+\item
+Can be more precise with our types: e.g. \emph{signed} and \emph{unsigned} ints. 
+
+\item
+But what if you need a \emph{non-zero} int? What about an int \emph{less than 5}? 
+
+\item What about a type that depends on another? E.g. a index \emph{i smaller than the size n} of a list L? 
+
+\item 
+Can we extend the type system to cover the above cases? How complicated does the type system become? Can the compiler still manage it? 
+\end{itemize}
+\end{frame}
+
+
+
+
+\begin{frame}{Intuitive Applications for Refinement Types}
+Most useful when you can view the correct input to a function as a \emph{special case} of possible inputs:
+\begin{block}{}
+\begin{itemize}
+\item division by zero: require \emph{non-zero} integers
+\item index out-of-bounds error: list of given \emph{size}, index integer \emph{smaller than list size}
+\item matrix multiplication issues: matrices of \emph{compatible dimensions}
+\item uninitialized data-structure: mark data-structure as \emph{intialized} (e.g. require \emph{sorted} list for binary search)
+\item general invariants can be encoded as \emph{maintaining type}
+\end{itemize}
+\end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+\begin{block}{Code to be Verified}
+\begin{lstlisting}[language=Rust]
+
+fn abs(x: int) -> int { 
+  if x < 0 { 
+      return -x;
+  } else { 
+      return x;
+  }
+} 
+\end{lstlisting}
+\end{block}
+\end{frame}
+
+
+
+
+\begin{frame}[fragile]
+\begin{block}{Encoding in Dafny}
+\begin{lstlisting}[language=C]
+method Abs(x: int) returns (y: int)
+  <@\textcolor{red}{ensures 0 $\leq$ y}@>
+{
+  if x < 0 {
+    return -x;
+  } else {
+    return x;
+  }
+}
+\end{lstlisting}
+\end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+\begin{block}{Refinement Types}
+\begin{lstlisting}[language=Rust]
+
+fn abs(x: int) ->  <@\textcolor{red}{int \{v : $0 \leq v$\}}@> { 
+  if x < 0 { 
+      return -x;
+  } else { 
+      return x;
+  }
+} 
+\end{lstlisting}
+\end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+\begin{block}{Binding a Value}
+\begin{lstlisting}[language=Rust]
+
+fn abs(x: <@\textcolor{red}{int$\langle n \rangle$}@>) ->  <@\textcolor{black}{int \{v : $0 \leq v$}@> <@\textcolor{red}{$\wedge\ n \leq v$}@>} { 
+  if x < 0 { 
+      return -x;
+  } else { 
+      return x;
+  }
+} 
+\end{lstlisting}
+\end{block}
+\end{frame}
+
+
+
+
+
 \section{Rust}
 \begin{frame}{Overview}
 \begin{block}{What will we do?}
@@ -36,33 +262,6 @@
 	\item How Refinement Types interact with Rust
 \end{itemize}
 \end{block}
-\end{frame}
-
-
-\section{Formal Verification Intro}
-\begin{frame}{Formal Verification: Rapid Refresh}
-\begin{block}{What is Formal Verification?}
-\begin{itemize} 
-	\item Program verification: Logically ``prove" correctness of a program
-	\item labour-intensive process
-	\item Can involve manual encoding in e.g. Coq (Rocq), Agda, Lean, Idris
-	\item Some tools for (partial) automation: Dafny, Viper, etc.
-	\item Often rely on an SMT solver and/or Horn Clause solver
-	\item ``very high level of reliability" BUT only as good as your mathematical model 
-	\item Other methods (e.g. model checking) also exist.
-\end{itemize} 
-\end{block}
-\end{frame}
-
-
-\begin{frame}
-\includegraphics[scale=0.6]{pictures/verification/bubblesort.png}
-\end{frame}
-
-\begin{frame}
-\begin{center}
-\includegraphics[scale=0.3]{pictures/verification/bubblesort_annotated.png}
-\end{center}
 \end{frame}
 
 
