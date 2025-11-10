@@ -2,6 +2,7 @@
 \usepackage{listings, listings-rust}
 \usepackage{graphicx}
 \usepackage{mathpartir}
+\usepackage{mathabx}
 
 \lstset{escapeinside={<@}{@>}}
 
@@ -31,190 +32,6 @@
 %\end{frame}
 
 \section{Formal Verification Intro}
-
-\begin{frame}{Example Verification}
-Let's say we want to verify the $\lambda$-function: 
-\begin{block}{Lambda representation}
-\[\texttt{inc} \equiv \lambda x.\ x + 1\]
-\end{block} 
-maps natural numbers to natural numbers
-\begin{block}{}
-\[
-\texttt{inc} : 
-\mathsf{int}\{v: 0 \leq v\} \rightarrow \mathsf{int}\{v : 0 \leq v\}
-\]
-\end{block}
-\end{frame}
-
-\begin{frame}{Typing Judgements} 
-First, we would need a rule about the type of our function. 
-
-We can assume we have a \emph{typing context} $\Gamma$. This contains 
-variable bindings like $x : int$. 
-
-A judgement like 
-\[
-\Gamma \vdash e : t
-\]
-means that in the context $\Gamma$, the type of $e$ is $t$.
-
-
-%Then we would have a rule like: 
-%\begin{center}
-%$
-%\inferrule*[]{
-%	x : t_1 \vdash e : t_2
-% }{ 
-% \Gamma \vdash \lambda x . e : t_1 \rightarrow t_2
-%}
-%$
-%\end{center} 
-\end{frame}
-
-%\begin{frame}{Typing Judgements} 
-%First, we would need a rule about the type of our function. 
-%
-%We can assume we have a \emph{typing context} $\Gamma$. This contains 
-%variable bindings like $x : int$. 
-%
-%A judgement like 
-%$
-%\Gamma \vdash e : t
-%$
-%means that in the context $\Gamma$, the type of $e$ is $t$.
-%
-%\begin{block}{Then we would have a rule like:}
-%\begin{center}
-%$
-%\inferrule*[]{
-%	\Gamma, x : t_1 \vdash e : t_2
-% }{ 
-% \Gamma \vdash \lambda x .\ e : t_1 \rightarrow t_2
-%}
-%$
-%\end{center} 
-%\end{block}
-%\end{frame}
-
-\begin{frame} 
-\begin{block}{Rule in the Type System}
-\begin{center}
-$
-\inferrule*[]{
-	\Gamma, x : t_1 \vdash e : t_2
- }{ 
- \Gamma \vdash \lambda x . e : t_1 \rightarrow t_2
-}
-$
-\end{center} 
-\end{block}
-
-Then we would be able to go ``up" one step using the rule: \\
-
-\begin{block}{Applied to Our Case}
-\begin{center}
-$
-\inferrule*[]{
-	\Gamma, x : \mathsf{int}\{v: v \geq 0\} \vdash x+1 : \mathsf{int}\{v: v \geq 0\}
- }{ 
- \Gamma \vdash \lambda x.\ x + 1 : \mathsf{int}\{v: v \geq 0\} \rightarrow \mathsf{int}\{v: v \geq 0\} 
-}
-$
-\end{center} 
-\end{block}
-\end{frame}
-
-
-\begin{frame} 
-As we keep going up the tree, we will eventually get to a rule like: 
-\begin{block}{}
-\begin{center}
-$
-\inferrule*[]{
-	\Gamma \vdash \forall x : b .\ \phi \Rightarrow \tau
- }{ 
- \Gamma; x: b \{ x : \phi \} \vdash \tau
-}
-$
-\end{center} 
-\end{block}
-
-\textit{Under the context gamma: if for every $x$ in the base type $b$ for which the proposition $\phi$ holds, we can derive condition $\tau$, then in the context extended with $x$ being in the $\emph{refinement}$ type, we can derive $\tau$.}
-
-Moving up along this rule lets us go from a refinement type, to a checkable \emph{implication} to pass to an SMT solver!
-\end{frame} 
-
-
-
-
-
-
-\begin{frame}{Tweaking the Rule} 
-For refinement type systems, it is actually very important that we are allowed \emph{dependent} functions: 
-
-\begin{block}{Then we would have a rule like:}
-\begin{center}
-$
-\inferrule*[]{
-	\Gamma, x : t_1 \vdash e : t_2
- }{ 
- \Gamma \vdash \lambda x .\ e : (x\!:\!t_1) \rightarrow t_2
-}
-$
-\end{center} 
-\end{block}
-
- That means that the type $t_2$ can depend on the value $x$.
-\end{frame} 
-
-\begin{frame}{Biderectional Typing} 
-We cannot expect the programmer to write the exact types needed by the proof for every single sub-function. 
-
-Therefore, the system differentiates types that can be \emph{checked} against a type that is given, vs types that can be \emph{synthesized} (or inferred). 
-
-Synthesis and checking must maintain verification side-conditions $\tau$ to be passed up to the SMT solver.
-
-Bidrectional type-checking allows the programmer to write type signatures for functions. Refinement checker can synthesize types of intermediate sub-expressions.
-\end{frame} 
-
-
-\begin{frame}{Refinement Inference}
-In order to enable type polymorphism, and higher-order programming, we must go further. 
-
-Type signatures are allowed contain ``holes" with unknown refinements 
-
-Holes are replaced with \emph{Horn variables} 
-
-Verification conditions now contain Horn variable applications as well as predicates. 
-
-Rather than SMT solver, use a Horn Solver to perform \emph{fixpoint} computation to determine allowed refinements. 
-
-Not merely \emph{validity} of a verification condition - instead, \emph{satisfying assignment}.
-
-More complex: 
-
-\end{frame} 
-
-
-\begin{frame}{}
-\begin{center}
-$
-\inferrule*[right=B-NonDet.1]{
-\langle C_1 , s \rangle \Downarrow s'
- }{ 
-\langle C_1 \oplus C_2, s \rangle \Downarrow s'
-}
-$
-\qquad
-$
-\inferrule*[right=B-NonDet.2]{
-\langle C_2, s \rangle \Downarrow s'
- }{ 
-\langle C_1 \oplus C_2, s \rangle \Downarrow s'
-}
-$
-\end{center} 
-\end{frame}
 
 \begin{frame}[fragile]
 \begin{block}{Possibly Correct Python Code}
@@ -393,23 +210,6 @@ b \{ v : p(v) \}
 
 
 
-\begin{frame}[fragile]
-\begin{block}{Depedent function and Binding a Value}
-\begin{lstlisting}[language=Rust]
-
-fn abs(x: <@\textcolor{red}{int$\langle n \rangle$}@>) ->  <@\textcolor{black}{int \{v : $0 \leq v$}@> 
-                         <@\textcolor{red}{$\wedge\ ((n = v) \vee (-n = v))$}@>} 
-{ 
-  if x < 0 { 
-      return -x;
-  } else { 
-      return x;
-  }
-} 
-\end{lstlisting}
-\end{block}
-\end{frame}
-
 \section{Implementing Refinement Type Checking} 
 \begin{frame}{Implementing Refinement Type Checking} 
 Rules can be specified on a $\lambda$-calculus. 
@@ -435,31 +235,326 @@ Verifying the program then amounts to deriving that the above has the type:
 (Actually, that the function is a \emph{subtype} of the above type!)
 \end{frame}
 
+
+\begin{frame}{Example Verification}
+Let's say we want to verify the $\lambda$-function: 
+\begin{block}{Lambda representation}
+\[\texttt{inc} \equiv \lambda x.\ x + 1\]
+\end{block} 
+maps natural numbers to natural numbers
+\begin{block}{}
+\[
+\texttt{inc} : 
+\mathsf{int}\{v: 0 \leq v\} \rightarrow \mathsf{int}\{v : 0 \leq v\}
+\]
+\end{block}
+\end{frame}
+
+\begin{frame}{Typing Judgements} 
+First, we would need a rule about the type of our function. 
+
+We can assume we have a \emph{typing context} $\Gamma$. This contains 
+variable bindings like $x : int$. 
+
+A judgement like 
+\[
+\Gamma \vdash e : t
+\]
+means that in the context $\Gamma$, the type of $e$ is $t$.
+
+
+%Then we would have a rule like: 
+%\begin{center}
+%$
+%\inferrule*[]{
+%	x : t_1 \vdash e : t_2
+% }{ 
+% \Gamma \vdash \lambda x . e : t_1 \rightarrow t_2
+%}
+%$
+%\end{center} 
+\end{frame}
+
+%\begin{frame}{Typing Judgements} 
+%First, we would need a rule about the type of our function. 
+%
+%We can assume we have a \emph{typing context} $\Gamma$. This contains 
+%variable bindings like $x : int$. 
+%
+%A judgement like 
+%$
+%\Gamma \vdash e : t
+%$
+%means that in the context $\Gamma$, the type of $e$ is $t$.
+%
+%\begin{block}{Then we would have a rule like:}
+%\begin{center}
+%$
+%\inferrule*[]{
+%	\Gamma, x : t_1 \vdash e : t_2
+% }{ 
+% \Gamma \vdash \lambda x .\ e : t_1 \rightarrow t_2
+%}
+%$
+%\end{center} 
+%\end{block}
+%\end{frame}
+
+\begin{frame} 
+\begin{block}{Rule in the Type System}
+\begin{center}
+$
+\inferrule*[]{
+	\Gamma, x : t_1 \vdash e : t_2
+ }{ 
+ \Gamma \vdash \lambda x . e : t_1 \rightarrow t_2
+}
+$
+\end{center} 
+\end{block}
+
+Then we would be able to go ``up" one step using the rule: \\
+
+\begin{block}{Applied to Our Case}
+\begin{center}
+$
+\inferrule*[]{
+	\Gamma, x : \mathsf{int}\{v: v \geq 0\} \vdash x+1 : \mathsf{int}\{v: v \geq 0\}
+ }{ 
+ \Gamma \vdash \lambda x.\ x + 1 : \mathsf{int}\{v: v \geq 0\} \rightarrow \mathsf{int}\{v: v \geq 0\} 
+}
+$
+\end{center} 
+\end{block}
+\end{frame}
+
+
+\begin{frame} 
+As we keep going up the tree, we will eventually get to a rule like: 
+\begin{block}{}
+\begin{center}
+$
+\inferrule*[]{
+	\Gamma \vdash \forall x : b .\ \phi \Rightarrow \tau
+ }{ 
+ \Gamma; x: b \{ x : \phi \} \vdash \tau
+}
+$
+\end{center} 
+\end{block}
+
+\textit{Under the context gamma: if for every $x$ in the base type $b$ for which the proposition $\phi$ holds, we can derive condition $\tau$, then in the context extended with $x$ being in the $\emph{refinement}$ type, we can derive $\tau$.}
+
+Moving up along this rule lets us go from a refinement type, to a checkable \emph{implication} to pass to an SMT solver!
+\end{frame} 
+
+
+
+
+
+
+\begin{frame}{Tweaking the Rule} 
+For refinement type systems, it is actually very important that we are allowed \emph{dependent} functions: 
+
+\begin{block}{Then we would have a rule like:}
+\begin{center}
+$
+\inferrule*[]{
+	\Gamma, x : t_1 \vdash e : t_2
+ }{ 
+ \Gamma \vdash \lambda x .\ e : (x\!:\!t_1) \rightarrow t_2
+}
+$
+\end{center} 
+\end{block}
+
+ That means that the type $t_2$ can depend on the value $x$.
+\end{frame} 
+
+
+
+\begin{frame}[fragile]
+\begin{block}{Depedent function and Binding a Value}
+\begin{lstlisting}[language=Rust]
+
+fn abs(x: <@\textcolor{red}{int$\langle n \rangle$}@>) ->  <@\textcolor{black}{int \{v : $0 \leq v$}@> 
+                         <@\textcolor{red}{$\wedge\ ((n = v) \vee (-n = v))$}@>} 
+{ 
+  if x < 0 { 
+      return -x;
+  } else { 
+      return x;
+  }
+} 
+\end{lstlisting}
+\end{block}
+\end{frame}
+
+\begin{frame}{Biderectional Typing} 
+We cannot expect the programmer to write the exact types needed by the proof for every single sub-function. 
+
+Therefore, the system differentiates types that can be \emph{checked} against a type that is given, vs types that can be \emph{synthesized} (or inferred). 
+
+Synthesis and checking must maintain verification side-conditions $\tau$ to be passed up to the SMT solver.
+
+Bidrectional type-checking allows the programmer to write type signatures for functions. Refinement checker can synthesize types of intermediate sub-expressions.
+\end{frame} 
+
+
+\begin{frame}{Refinement Inference}
+In order to enable type polymorphism, and higher-order programming, we must go further. 
+
+Type signatures are allowed contain ``holes" with unknown refinements 
+
+Holes are replaced with \emph{Horn variables} 
+
+Verification conditions now contain Horn variable applications as well as predicates. 
+
+Rather than SMT solver, use a Horn Solver to perform \emph{fixpoint} computation to determine allowed refinements. 
+
+Not merely \emph{validity} of a verification condition - instead, \emph{satisfying assignment}.
+
+More complex: 
+
+\end{frame} 
+
+
 \begin{frame}{}
-Typing arguments are represented through typing judgements: 
-\begin{itemize} 
-\item well-formedness
-\item entailment
-\item subtyping 
+\begin{center}
+$
+\inferrule*[right=B-NonDet.1]{
+\langle C_1 , s \rangle \Downarrow s'
+ }{ 
+\langle C_1 \oplus C_2, s \rangle \Downarrow s'
+}
+$
+\qquad
+$
+\inferrule*[right=B-NonDet.2]{
+\langle C_2, s \rangle \Downarrow s'
+ }{ 
+\langle C_1 \oplus C_2, s \rangle \Downarrow s'
+}
+$
+\end{center} 
+\end{frame}
+
+
+\section{Rust Intro}
+\begin{frame}{Rust}
+\begin{block}{What is Rust?}
+\begin{itemize}
+	\item Rust is a \textbf{systems} programming language
+	\begin{itemize}
+		\item low-level control
+		\item fast / efficient
+	\end{itemize}
+	\item strongly-typed
+	\item ``ownership" and ``borrowing"
+\end{itemize}
+\end{block}
+\begin{block}{Special Sauce} 
+Memory safety guarantees without garbage collection
+\end{block}
+\end{frame}
+
+
+\begin{frame}[fragile]
+\frametitle{Ownership and Borrow Examples}
+\begin{lstlisting}[language=Rust]
+foo(s); // foo takes ownership of s
+bar(&t); // bar borrows t as read-only
+baz(&mut u); // baz borrows u and can modify it
+\end{lstlisting}
+\end{frame}
+
+
+\begin{frame}{Rust: Variable Scopes}
+\begin{block}{} 
+\begin{itemize}
+\item Rust automatically calculates lifetimes
+\item When an object goes out of scope, its resources are automatically freed
+\item ``Resource Acquisition is Initialization" 
+\end{itemize}
+\end{block}
+\begin{quote}
+``resource is guaranteed to be held between when initialization finishes and finalization starts 
+and to be held only when the object is alive"
+\end{quote}
+\end{frame}
+
+
+\section{Combination}
+\begin{frame}{What makes Rust interesting for Refinement Types?}
+\begin{itemize}
+\item Refinement Types apply naturally in a functional setting
+\item Refinement type checking becomes difficult with pointers / memory
+\item Rust type system, borrow checker, memory model, variable scopes etc. makes for ``quasi-functional" imperative code
+\end{itemize} 
+\begin{center}
+\end{center}
+\end{frame}
+
+
+\begin{frame}{Flux} 
+\begin{itemize}
+\item Refinement Type Checking / Liquid typing
+\item Runs as a Rust compiler plugin 
+\item Less powerful than Prusti but much faster and with fewer annotations
+\item Concept of "strong mutability / structural mutability" - e.g. whether a vector's length can change or just the values of its elements
+\item No quantified statements - cannot verify e.g. sortedness of list
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Flux Implementation} 
+\begin{itemize}
+\item Model Rust using $\lambda_{LR}$: core calculus of safe fragment of Rust extended with refinement types
 \item 
+Use \emph{Stacked Borrows} discipline to model Rust's memory
+\item 
+Rely on correct borrow checking from Rust's compiler - assume e.g. non-aliasing of pointers.
+\item Extended typing judgements
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}{} 
+\vspace{4em}
+\begin{block}{Extended Typing Judgement} 
+\[
+\Delta;\Gamma;T_i \vdash e : \tau \dashv T_o
+\]
+\end{block}
+\begin{itemize} 
+\item $\Delta$: Refinement context maps refinement variables to sorts and contains predicates relating them
+\item $\Gamma$ values context tracks local variables in scope and maps them to types
+\item $T_i$ input location context is memory model - it describes ownership of locations and corresponding types
+\item $e$ expression
+\item $\tau$ type
+\item $T_o$ output location context is memory after statement is executed
 \end{itemize} 
 \end{frame}
 
-\begin{frame}{Implementing Refinement Type Checking} 
-Rules can be specified on a lambda type calculus
-\[
-x : \texttt{int} ;
-\texttt{one} : \texttt{int}\{v: v = 1\}
-\vdash 
-\texttt{add}\ x\ \texttt{one} 
-\Leftarrow
-\texttt{int} 
-\{
-v : x < v
-\}
-\]
-
+\begin{frame}{References} 
+\begin{itemize} 
+\item 
+Nico Lehmann, Adam T. Geller, Niki Vazou, and Ranjit Jhala. 2023. Flux: Liquid Types for Rust. Proc. ACM Program. Lang. 7, PLDI, Article 169 (June 2023), 25 pages. https://doi.org/10.1145/3591283
+\item Ranjit Jhala and Niki Vazou. 2021. Refinement Types: A Tutorial. Found. Trends Program. Lang. 6, 3–4 (Oct 2021), 159–317. https://doi.org/10.1561/2500000032
+\end{itemize} 
 \end{frame}
+
+\begin{frame}{EU Flag} 
+\begin{center}
+\includegraphics[scale=0.1]{pictures/euflag.png}
+
+The project leading to this application has received funding from the
+European Union's Horizon 2020 research and innovation programme under grant agreement No
+101034440.
+\end{center}
+\end{frame}
+
+
+\end{document}
 
 
 
@@ -501,49 +596,7 @@ Now x\_end = x\_start + 2 ``and" y\_end = y\_start + 2.
 \end{frame}
 
 
-\section{Rust Intro}
-\begin{frame}{Rust}
-\begin{block}{What is Rust?}
-\begin{itemize}
-	\item Rust is a \textbf{systems} programming language
-	\begin{itemize}
-		\item low-level control
-		\item fast / efficient
-	\end{itemize}
-	\item strongly-typed
-	\item ``ownership" and ``borrowing"
-\end{itemize}
-\end{block}
-\begin{block}{Special Sauce} 
-Memory safety guarantees without garbage collection
-\end{block}
-\end{frame}
 
-
-
-\begin{frame}[fragile]
-\frametitle{Ownership and Borrow Examples}
-\begin{lstlisting}[language=Rust]
-foo(s); // foo takes ownership of s
-bar(&t); // bar borrows t as read-only
-baz(&mut u); // baz borrows u and can modify it
-\end{lstlisting}
-\end{frame}
-
-
-\begin{frame}{Rust: Variable Scopes}
-\begin{block}{} 
-\begin{itemize}
-\item Rust automatically calculates lifetimes
-\item When an object goes out of scope, its resources are automatically freed
-\item ``Resource Acquisition is Initialization" 
-\end{itemize}
-\end{block}
-\begin{quote}
-``resource is guaranteed to be held between when initialization finishes and finalization starts 
-and to be held only when the object is alive"
-\end{quote}
-\end{frame}
 
 
 \begin{frame}[fragile]
@@ -619,6 +672,8 @@ fn calculate_length(s : &String) -> usize
 \end{block}
 
 \end{frame}
+
+
 
 
 
