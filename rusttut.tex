@@ -335,9 +335,9 @@ As we keep going up the tree, we will eventually get to a rule like:
 \begin{center}
 $
 \inferrule*[]{
-	\Gamma \vdash \forall x : b .\ \phi \Rightarrow \tau
+	\Gamma \vdash \forall x : b .\ \phi(x) \Rightarrow \tau
  }{ 
- \Gamma; x: b \{ x : \phi \} \vdash \tau
+ \Gamma; x: b \{ v : \phi(v) \} \vdash \tau
 }
 $
 \end{center} 
@@ -348,12 +348,68 @@ $
 Moving up along this rule lets us go from a refinement type, to a checkable \emph{implication} to pass to an SMT solver!
 \end{frame} 
 
+\begin{frame} 
+\begin{block}{}
+\begin{center}
+$
+\inferrule*[]{
+	\Gamma \vdash \forall x : b .\ \phi(x) \Rightarrow \tau(x)
+ }{ 
+ \Gamma; x: b \{ v : \phi(v) \} \vdash \tau(x)
+}
+$
+\end{center} 
+\end{block}
+
+\begin{block}{}
+\begin{center}
+$
+\inferrule*[]{
+	\Gamma \vdash \forall x : \mathsf{int} .\ x \geq 0 \Rightarrow x > -1
+ }{ 
+ \Gamma; x: \mathsf{int} \{ v : v \geq 0 \} \vdash  x > -1
+}
+$
+\end{center} 
+\end{block}
+
+\end{frame} 
 
 
 
 
 
-\begin{frame}{Tweaking the Rule} 
+\begin{frame} 
+\begin{block}{}
+\begin{center}
+$
+\inferrule*[]{
+	\Gamma \vdash \forall x : b .\ \phi(x) \Rightarrow \tau(x)
+ }{ 
+ \Gamma; x: b \{ v : \phi(v) \} \vdash \tau(x)
+}
+$
+\end{center} 
+\end{block}
+
+\begin{block}{}
+From 
+\[
+ x: \mathsf{int} \{ v : 0 \leq v \}; y: \mathsf{int}\{ v = x + 1\} \vdash  0 \leq y
+\]
+derive condition
+\[
+	\Gamma \vdash \forall x : \mathsf{int} .\ 0 \leq x \Rightarrow \forall y :\mathsf{int}
+	.\ y = x+ 1 \Rightarrow 0 \leq y
+\]
+\end{block}
+
+\end{frame} 
+
+
+
+
+\begin{frame}{Dependent Types: Tweaking the Function Rule} 
 For refinement type systems, it is actually very important that we are allowed \emph{dependent} functions: 
 
 \begin{block}{Then we would have a rule like:}
