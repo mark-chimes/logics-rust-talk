@@ -1,6 +1,7 @@
 \documentclass{beamer}
 \usepackage{listings, listings-rust}
 \usepackage{graphicx}
+\usepackage{mathpartir}
 
 \lstset{escapeinside={<@}{@>}}
 
@@ -10,12 +11,15 @@
 \setbeamercovered{transparent}
 
 
-\title{Refinement Types and Rust Verification}
-\subtitle{}
+\title{Refinement and Rust}
+\subtitle{Refinement Types and Verification of Rust Programs}
 \author{Mark Chimes}
 \date{\today}
 
 \begin{document}
+
+
+
 
 
 \begin{frame}
@@ -28,6 +32,189 @@
 
 \section{Formal Verification Intro}
 
+\begin{frame}{Example Verification}
+Let's say we want to verify the $\lambda$-function: 
+\begin{block}{Lambda representation}
+\[\texttt{inc} \equiv \lambda x.\ x + 1\]
+\end{block} 
+maps natural numbers to natural numbers
+\begin{block}{}
+\[
+\texttt{inc} : 
+\mathsf{int}\{v: 0 \leq v\} \rightarrow \mathsf{int}\{v : 0 \leq v\}
+\]
+\end{block}
+\end{frame}
+
+\begin{frame}{Typing Judgements} 
+First, we would need a rule about the type of our function. 
+
+We can assume we have a \emph{typing context} $\Gamma$. This contains 
+variable bindings like $x : int$. 
+
+A judgement like 
+\[
+\Gamma \vdash e : t
+\]
+means that in the context $\Gamma$, the type of $e$ is $t$.
+
+
+%Then we would have a rule like: 
+%\begin{center}
+%$
+%\inferrule*[]{
+%	x : t_1 \vdash e : t_2
+% }{ 
+% \Gamma \vdash \lambda x . e : t_1 \rightarrow t_2
+%}
+%$
+%\end{center} 
+\end{frame}
+
+%\begin{frame}{Typing Judgements} 
+%First, we would need a rule about the type of our function. 
+%
+%We can assume we have a \emph{typing context} $\Gamma$. This contains 
+%variable bindings like $x : int$. 
+%
+%A judgement like 
+%$
+%\Gamma \vdash e : t
+%$
+%means that in the context $\Gamma$, the type of $e$ is $t$.
+%
+%\begin{block}{Then we would have a rule like:}
+%\begin{center}
+%$
+%\inferrule*[]{
+%	\Gamma, x : t_1 \vdash e : t_2
+% }{ 
+% \Gamma \vdash \lambda x .\ e : t_1 \rightarrow t_2
+%}
+%$
+%\end{center} 
+%\end{block}
+%\end{frame}
+
+\begin{frame} 
+\begin{block}{Rule in the Type System}
+\begin{center}
+$
+\inferrule*[]{
+	\Gamma, x : t_1 \vdash e : t_2
+ }{ 
+ \Gamma \vdash \lambda x . e : t_1 \rightarrow t_2
+}
+$
+\end{center} 
+\end{block}
+
+Then we would be able to go ``up" one step using the rule: \\
+
+\begin{block}{Applied to Our Case}
+\begin{center}
+$
+\inferrule*[]{
+	\Gamma, x : \mathsf{int}\{v: v \geq 0\} \vdash x+1 : \mathsf{int}\{v: v \geq 0\}
+ }{ 
+ \Gamma \vdash \lambda x.\ x + 1 : \mathsf{int}\{v: v \geq 0\} \rightarrow \mathsf{int}\{v: v \geq 0\} 
+}
+$
+\end{center} 
+\end{block}
+\end{frame}
+
+
+\begin{frame} 
+As we keep going up the tree, we will eventually get to a rule like: 
+\begin{block}{}
+\begin{center}
+$
+\inferrule*[]{
+	\Gamma \vdash \forall x : b .\ \phi \Rightarrow \tau
+ }{ 
+ \Gamma; x: b \{ x : \phi \} \vdash \tau
+}
+$
+\end{center} 
+\end{block}
+
+\textit{Under the context gamma: if for every $x$ in the base type $b$ for which the proposition $\phi$ holds, we can derive condition $\tau$, then in the context extended with $x$ being in the $\emph{refinement}$ type, we can derive $\tau$.}
+
+Moving up along this rule lets us go from a refinement type, to a checkable \emph{implication} to pass to an SMT solver!
+\end{frame} 
+
+
+
+
+
+
+\begin{frame}{Tweaking the Rule} 
+For refinement type systems, it is actually very important that we are allowed \emph{dependent} functions: 
+
+\begin{block}{Then we would have a rule like:}
+\begin{center}
+$
+\inferrule*[]{
+	\Gamma, x : t_1 \vdash e : t_2
+ }{ 
+ \Gamma \vdash \lambda x .\ e : (x\!:\!t_1) \rightarrow t_2
+}
+$
+\end{center} 
+\end{block}
+
+ That means that the type $t_2$ can depend on the value $x$.
+\end{frame} 
+
+\begin{frame}{Biderectional Typing} 
+We cannot expect the programmer to write the exact types needed by the proof for every single sub-function. 
+
+Therefore, the system differentiates types that can be \emph{checked} against a type that is given, vs types that can be \emph{synthesized} (or inferred). 
+
+Synthesis and checking must maintain verification side-conditions $\tau$ to be passed up to the SMT solver.
+
+Bidrectional type-checking allows the programmer to write type signatures for functions. Refinement checker can synthesize types of intermediate sub-expressions.
+\end{frame} 
+
+
+\begin{frame}{Refinement Inference}
+In order to enable type polymorphism, and higher-order programming, we must go further. 
+
+Type signatures are allowed contain ``holes" with unknown refinements 
+
+Holes are replaced with \emph{Horn variables} 
+
+Verification conditions now contain Horn variable applications as well as predicates. 
+
+Rather than SMT solver, use a Horn Solver to perform \emph{fixpoint} computation to determine allowed refinements. 
+
+Not merely \emph{validity} of a verification condition - instead, \emph{satisfying assignment}.
+
+More complex: 
+
+\end{frame} 
+
+
+\begin{frame}{}
+\begin{center}
+$
+\inferrule*[right=B-NonDet.1]{
+\langle C_1 , s \rangle \Downarrow s'
+ }{ 
+\langle C_1 \oplus C_2, s \rangle \Downarrow s'
+}
+$
+\qquad
+$
+\inferrule*[right=B-NonDet.2]{
+\langle C_2, s \rangle \Downarrow s'
+ }{ 
+\langle C_1 \oplus C_2, s \rangle \Downarrow s'
+}
+$
+\end{center} 
+\end{frame}
 
 \begin{frame}[fragile]
 \begin{block}{Possibly Correct Python Code}
@@ -54,53 +241,6 @@ In Python, this is only caught at run-time. In C or Rust this is caught at compi
 \end{frame}
 
 
-
-\begin{frame}[fragile]{Two pointers}
-\begin{block}{Possibly Correct C Code}
-\begin{lstlisting}[language=C]
-void increment_both(int *x, int *y)
-{
-    *x = *x + 1; 
-    *y = *y + 1;   
-}
- \end{lstlisting}
-\end{block}
-
-Naively expect, after ``increment both" is done, that\\
-x\_end = x\_start + 1 and \\
-y\_end = y\_start + 1
-
-\end{frame}
-
-\begin{frame}[fragile]{}
-\begin{block}{Possibly Correct C Code}
-\begin{lstlisting}[language=C]
-void increment_both(int *x, int *y)
-{
-    *x = *x + 1; 
-    *y = *y + 1;   
-}
- \end{lstlisting}
-\end{block}
-
-\begin{block}{}
-\begin{lstlisting}[language=C]
-increment_both(&a, &a); 
-\end{lstlisting}
-\end{block}
-Now x\_end = x\_start + 2 ``and" y\_end = y\_start + 2.
-\end{frame}
-
-
-
-\begin{frame}{}
-\begin{itemize}
-\item In Safe Rust, mutable references can \emph{never alias}, i.e.,*x and *y must point to 
-\emph{distinct areas of memory}.
-\item 
-\end{itemize} 
-\end{frame}
-
 \begin{frame} 
 We are interested in writing \emph{more correct} code. Thus, we would want to avoid the following kinds of \emph{common mistakes}: 
 
@@ -113,7 +253,7 @@ We are interested in writing \emph{more correct} code. Thus, we would want to av
 \item multiply matrices with incompatible dimensions
 \item use a pointer after it is deallocated in memory
 \item forget a base-case in a recursive function
-\item general off-by one error
+\item general off-by one errors
 \end{itemize}
 \end{block}
 
@@ -132,20 +272,6 @@ We are interested in writing \emph{more correct} code. Thus, we would want to av
 \end{itemize} 
 \end{block}
 \end{frame}
-
-\begin{frame}{Formal Verification: Rapid Refresh}
-\begin{block}{What is Formal Verification?}
-\begin{itemize} 
-	\item Program verification: Logically ``prove" correctness of a program
-	\item labour-intensive process - Can involve manual encoding in e.g. Rocq, Agda, Lean, Idris
-	\item Some tools for (partial) automation: Dafny, Viper, etc.
-	\item Often rely on an SMT solver and/or Horn Clause solver
-	\item ``very high level of reliability" BUT only as good as your mathematical model 
-\end{itemize} 
-\end{block}
-\end{frame}
-
-
 
 \section{Refinement Type Checking}
 \begin{frame}{Refinement Types: Idea}
@@ -218,6 +344,8 @@ method Abs(x: int) returns (y: int)
 \end{frame}
 
 
+
+
 \begin{frame}[fragile]
 \begin{block}{Refinement Types}
 \begin{lstlisting}[language=Rust]
@@ -234,11 +362,44 @@ fn abs(x: int) ->  <@\textcolor{red}{int \{v : $0 \leq v$\}}@> {
 \end{frame}
 
 
+
+
+\begin{frame}
+Refined types: 
+\begin{itemize} 
+\item
+$\texttt{int} \{ v : v \not= 0\}$
+\item
+$\texttt{int} \{ v : v \geq 0\}$
+\item 
+$\texttt{int} \{ v : true \} $
+\item
+$\texttt{int} \{ v : v = x  \}$ (variables $x$ in scope)
+\item
+$\texttt{int} \{ v : v \geq 0 \wedge v \leq 5 \}$
+\item 
+$\texttt{bool} \{ v : v = (1+1 = 2) \}$
+\item 
+$\texttt{bool} \{ v : v = (x+y = z) \}$ (variables $x,y,z$ in scope)
+\end{itemize} 
+
+\begin{block}{General Form} 
+\[
+b \{ v : p(v) \}
+\]
+\end{block}
+\end{frame} 
+
+
+
+
 \begin{frame}[fragile]
-\begin{block}{Binding a Value}
+\begin{block}{Depedent function and Binding a Value}
 \begin{lstlisting}[language=Rust]
 
-fn abs(x: <@\textcolor{red}{int$\langle n \rangle$}@>) ->  <@\textcolor{black}{int \{v : $0 \leq v$}@> <@\textcolor{red}{$\wedge\ n \leq v$}@>} { 
+fn abs(x: <@\textcolor{red}{int$\langle n \rangle$}@>) ->  <@\textcolor{black}{int \{v : $0 \leq v$}@> 
+                         <@\textcolor{red}{$\wedge\ ((n = v) \vee (-n = v))$}@>} 
+{ 
   if x < 0 { 
       return -x;
   } else { 
@@ -249,20 +410,94 @@ fn abs(x: <@\textcolor{red}{int$\langle n \rangle$}@>) ->  <@\textcolor{black}{i
 \end{block}
 \end{frame}
 
+\section{Implementing Refinement Type Checking} 
+\begin{frame}{Implementing Refinement Type Checking} 
+Rules can be specified on a $\lambda$-calculus. 
+E.g. start with simply-typed $\lambda$-calculus, can enrich it with e.g. arithmetic values and operations, branching, and recursion.
 
+Programs represented as functions.
 
+Good for representing functional languages (e.g. Haskell) but becomes trickier when dealing with imperative languages (e.g. Rust).
+\end{frame} 
 
+\begin{frame}{}
+Our previous program can be represented by a $\lambda$-function: 
+\begin{block}{Lambda representation}
+$\texttt{abs} \equiv \lambda x. \texttt{ if } x < 0 \texttt{ then } -x \texttt{ else } x$
+\end{block} 
 
-\section{Rust}
-\begin{frame}{Overview}
-\begin{block}{What will we do?}
-\begin{itemize} 
-	\item Rapid Refresh on Formal verification
-	\item Refinement Type checking
-	\item Quick intro to Rust
-	\item How Refinement Types interact with Rust
-\end{itemize}
+Verifying the program then amounts to deriving that the above has the type: 
+\begin{block}{}
+\[
+\texttt{abs} : \texttt{int} \rightarrow \texttt{int}\{v : 0 \leq v\}
+\]
 \end{block}
+(Actually, that the function is a \emph{subtype} of the above type!)
+\end{frame}
+
+\begin{frame}{}
+Typing arguments are represented through typing judgements: 
+\begin{itemize} 
+\item well-formedness
+\item entailment
+\item subtyping 
+\item 
+\end{itemize} 
+\end{frame}
+
+\begin{frame}{Implementing Refinement Type Checking} 
+Rules can be specified on a lambda type calculus
+\[
+x : \texttt{int} ;
+\texttt{one} : \texttt{int}\{v: v = 1\}
+\vdash 
+\texttt{add}\ x\ \texttt{one} 
+\Leftarrow
+\texttt{int} 
+\{
+v : x < v
+\}
+\]
+
+\end{frame}
+
+
+
+
+\begin{frame}[fragile]{Two pointers}
+\begin{block}{Possibly Correct C Code}
+\begin{lstlisting}[language=C]
+void increment_both(int *x, int *y)
+{
+    *x = *x + 1; 
+    *y = *y + 1;   
+}
+ \end{lstlisting}
+\end{block}
+
+Naively expect, after ``increment both" is done, that\\
+x\_end = x\_start + 1 and \\
+y\_end = y\_start + 1
+
+\end{frame}
+
+\begin{frame}[fragile]{}
+\begin{block}{Possibly Correct C Code}
+\begin{lstlisting}[language=C]
+void increment_both(int *x, int *y)
+{
+    *x = *x + 1; 
+    *y = *y + 1;   
+}
+ \end{lstlisting}
+\end{block}
+
+\begin{block}{}
+\begin{lstlisting}[language=C]
+increment_both(&a, &a); 
+\end{lstlisting}
+\end{block}
+Now x\_end = x\_start + 2 ``and" y\_end = y\_start + 2.
 \end{frame}
 
 
@@ -283,6 +518,7 @@ fn abs(x: <@\textcolor{red}{int$\langle n \rangle$}@>) ->  <@\textcolor{black}{i
 Memory safety guarantees without garbage collection
 \end{block}
 \end{frame}
+
 
 
 \begin{frame}[fragile]
@@ -509,6 +745,13 @@ Some tools for unsafe Rust exist
 \item Concept of "strong mutability / structural mutability" - e.g. whether a vector's length can change or just the values of its elements
 \item No quantified statements - cannot verify e.g. sortedness of list
 \end{itemize}
+\end{frame}
+
+
+\begin{frame}{References} 
+\begin{itemize} 
+\item Ranjit Jhala and Niki Vazou. 2021. Refinement Types: A Tutorial. Found. Trends Program. Lang. 6, 3–4 (Oct 2021), 159–317. https://doi.org/10.1561/2500000032
+\end{itemize} 
 \end{frame}
 
 \begin{frame}{EU Flag} 
